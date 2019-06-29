@@ -3,7 +3,7 @@ FROM ubuntu:18.04
 ENV DEBIAN_FRONTEND "noninteractive"
 
 ENV STEAM_USER "steam"
-ENV STEAM_APP_DIR "/home/steam/csgo-dedicated"
+ENV STEAM_APP_DIR "/home/steam/Steam"
 ENV STEAM_CMD_DIR "/home/steam/.steam"
 ENV STEAM_CMD_URL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
 
@@ -13,6 +13,8 @@ RUN apt-get update && \
       apt-utils \
       lib32gcc1 \
       curl \
+      net-tools \
+      lib32stdc++6 \
       ca-certificates && \
     apt-get -y dist-upgrade && \
     apt-get -y clean && \
@@ -22,16 +24,18 @@ RUN apt-get update && \
     dpkg-reconfigure --frontend=noninteractive locales
 
 RUN useradd -ms /bin/bash "${STEAM_USER}" && \
+    mkdir "${STEAM_APP_DIR}" && \
     mkdir "${STEAM_CMD_DIR}" && cd "${STEAM_CMD_DIR}" && \
     curl -L "${STEAM_CMD_URL}" | tar xz && \
     mkdir -p "${STEAM_CMD_DIR}"/sdk32/ && \
     ln -s "${STEAM_CMD_DIR}"/Steam/linux32/steamclient.so "${STEAM_CMD_DIR}"/sdk32/steamclient.so && \
+    chown steam:steam "${STEAM_APP_DIR}" -R && \
     chown steam:steam "${STEAM_CMD_DIR}" -R
 
 USER steam
 
 WORKDIR "${STEAM_CMD_DIR}"
 
-CMD ["./steamcmd.sh"]
+CMD ["./steamcmd.sh +login anonymous +force_install_dir ${STEAM_APP_DIR}"]
 
 EXPOSE 27015/tcp 27015/udp
